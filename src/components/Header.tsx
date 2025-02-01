@@ -28,7 +28,7 @@ const Header = () => {
           <div className="flex items-center space-x-2">
             <Camera className="h-8 w-8 text-[#193547]" />
             <span className="text-xl font-bold bg-gradient-to-r from-[#193547] to-[#193547] bg-clip-text text-transparent">
-              TextosOpinio
+              El Meu Text d'Opinió
             </span>
           </div>
 
@@ -47,4 +47,3 @@ const Header = () => {
 };
 
 export default Header;
-
