@@ -1,6 +1,7 @@
 import React, { useState, useCallback, useRef } from "react";
-import { Upload, Image as ImageIcon, AlertCircle } from "lucide-react";
+import { Upload, AlertCircle, Loader2 } from "lucide-react";
 import type { ImageItem } from "../App";
+import { ImageManager } from "../lib/firebase/ImageManager";
 
 interface ImageUploadProps {
   onUpload: (image: ImageItem) => void;
@@ -11,7 +12,10 @@ const ImageUpload: React.FC<ImageUploadProps> = ({ onUpload }) => {
   const [preview, setPreview] = useState<string | null>(null);
   const [pseudonym, setPseudonym] = useState("");
   const [title, setTitle] = useState("");
+  const [isUploading, setIsUploading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   const handleDrag = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -23,54 +27,91 @@ const ImageUpload: React.FC<ImageUploadProps> = ({ onUpload }) => {
     }
   }, []);
 
-  const handleDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setDragActive(false);
-
-    const file = e.dataTransfer.files?.[0];
+  const processFile = useCallback((file: File) => {
     if (file && file.type.startsWith("image/")) {
+      setSelectedFile(file);
       const reader = new FileReader();
       reader.onload = () => {
         setPreview(reader.result as string);
       };
       reader.readAsDataURL(file);
+      setError(null);
+    } else {
+      setError("Por favor, selecciona un archivo de imagen válido");
     }
   }, []);
+
+  const handleDrop = useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      setDragActive(false);
+
+      const file = e.dataTransfer.files?.[0];
+      if (file) {
+        processFile(file);
+      }
+    },
+    [processFile],
+  );
 
   const handleFileChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const file = e.target.files?.[0];
-      if (file && file.type.startsWith("image/")) {
-        const reader = new FileReader();
-        reader.onload = () => {
-          setPreview(reader.result as string);
-        };
-        reader.readAsDataURL(file);
+      if (file) {
+        processFile(file);
       }
     },
-    [],
+    [processFile],
   );
 
   const handleSubmit = useCallback(
-    (e: React.FormEvent) => {
+    async (e: React.FormEvent) => {
       e.preventDefault();
-      if (preview) {
-        onUpload({
-          id: Date.now().toString(),
-          url: preview,
-          pseudonym: pseudonym || "Anònim",
-          title: title || undefined,
-        });
+      if (!selectedFile || !preview) return;
+
+      setIsUploading(true);
+      setError(null);
+
+      try {
+        const imageManager = new ImageManager(window.app);
+        const [error, metadata] = await imageManager.uploadImage(
+          selectedFile,
+          pseudonym || "Anònim",
+          title,
+        );
+
+        if (error) throw error;
+        if (!metadata)
+          throw new Error("No se pudo obtener la metadata de la imagen");
+
+        // Crear el objeto ImageItem con los datos de Firebase
+        const newImage: ImageItem = {
+          id: metadata.id,
+          url: metadata.url || preview, // Usar preview como fallback
+          pseudonym: metadata.creator || "Anònim",
+          title: metadata.title,
+        };
+
+        onUpload(newImage);
+
+        // Limpiar el formulario
         setPreview(null);
         setPseudonym("");
         setTitle("");
+        setSelectedFile(null);
         if (fileInputRef.current) {
           fileInputRef.current.value = "";
         }
+      } catch (err) {
+        setError(
+          err instanceof Error ? err.message : "Error al subir la imagen",
+        );
+      } finally {
+        setIsUploading(false);
       }
     },
-    [preview, pseudonym, title, onUpload],
+    [preview, pseudonym, title, selectedFile, onUpload],
   );
 
   const handleClick = () => {
@@ -103,6 +144,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({ onUpload }) => {
               onChange={handleFileChange}
               accept="image/*"
               className="hidden"
+              disabled={isUploading}
             />
             {preview ? (
               <img
@@ -123,6 +165,13 @@ const ImageUpload: React.FC<ImageUploadProps> = ({ onUpload }) => {
             )}
           </div>
 
+          {error && (
+            <div className="flex items-center gap-2 text-red-600 bg-red-50 p-3 rounded-lg">
+              <AlertCircle className="h-5 w-5" />
+              <p>{error}</p>
+            </div>
+          )}
+
           <div className="space-y-4">
             <div>
               <label
@@ -139,6 +188,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({ onUpload }) => {
                 onChange={(e) => setPseudonym(e.target.value)}
                 className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-[#193547] focus:border-transparent"
                 placeholder="Ex: Escriptor123"
+                disabled={isUploading}
               />
             </div>
 
@@ -157,16 +207,24 @@ const ImageUpload: React.FC<ImageUploadProps> = ({ onUpload }) => {
                 onChange={(e) => setTitle(e.target.value)}
                 className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-[#193547] focus:border-transparent"
                 placeholder="Ex: La meva opinió sobre..."
+                disabled={isUploading}
               />
             </div>
           </div>
 
           <button
             type="submit"
-            disabled={!preview}
-            className="w-full py-3 bg-[#193547] text-white rounded-lg font-semibold hover:bg-opacity-90 transition-colors duration-200 disabled:bg-gray-400 disabled:cursor-not-allowed"
+            disabled={!preview || isUploading}
+            className="w-full py-3 bg-[#193547] text-white rounded-lg font-semibold hover:bg-opacity-90 transition-colors duration-200 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
-            Penjar text
+            {isUploading ? (
+              <>
+                <Loader2 className="h-5 w-5 animate-spin" />
+                Penjant text...
+              </>
+            ) : (
+              "Penjar text"
+            )}
           </button>
         </form>
       </div>
