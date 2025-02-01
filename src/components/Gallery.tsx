@@ -1,34 +1,34 @@
-import React, { useState, useCallback } from 'react';
-import { Search } from 'lucide-react';
-import { Link } from 'react-router-dom';
-import type { ImageItem } from '../App';
+import React, { useState, useCallback } from "react";
+import { Search } from "lucide-react";
+import { Link } from "react-router-dom";
+import type { ImageItem } from "../App";
 
 interface GalleryProps {
   images: ImageItem[];
 }
 
 const Gallery: React.FC<GalleryProps> = ({ images }) => {
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState("");
 
-  const filteredImages = images.filter(
-    img => img.pseudonym.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredImages = images.filter((img) =>
+    img.pseudonym.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
   return (
     <section id="gallery" className="py-16">
       <div className="max-w-6xl mx-auto">
         <h2 className="text-3xl font-bold text-center mb-8 text-gray-800">
-          Galería de Artistas
+          Galeria de textos d'opinió
         </h2>
 
         <div className="relative max-w-md mx-auto mb-12">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
           <input
             type="text"
-            placeholder="Buscar por nombre artístico..."
+            placeholder="Cercar per pseudònim o títol..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 rounded-full border border-gray-300 focus:ring-2 focus:ring-purple-600 focus:border-transparent"
+            className="w-full pl-10 pr-4 py-2 rounded-full border border-gray-300 focus:ring-2 focus:ring-[#193547] focus:border-transparent"
           />
           {searchTerm && (
             <p className="absolute right-4 top-1/2 transform -translate-y-1/2 text-sm text-gray-500">
@@ -46,7 +46,7 @@ const Gallery: React.FC<GalleryProps> = ({ images }) => {
             >
               <img
                 src={image.url}
-                alt={image.title || 'Imagen de galería'}
+                alt={image.title || "Imatge de galeria"}
                 className="w-full h-64 object-cover transform transition-transform duration-300 group-hover:scale-110"
                 loading="lazy"
               />
@@ -67,3 +67,4 @@ const Gallery: React.FC<GalleryProps> = ({ images }) => {
 };
 
 export default Gallery;
+
