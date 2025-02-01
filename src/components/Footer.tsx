@@ -1,70 +1,63 @@
-import React from 'react';
-import { Camera, Heart, Shield } from 'lucide-react';
+import React from "react";
+import { Shield } from "lucide-react";
 
 const Footer = () => {
   return (
     <footer className="bg-white/80 backdrop-blur-lg border-t border-gray-200">
       <div className="container mx-auto px-4 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          <div>
-            <div className="flex items-center space-x-2 mb-4">
-              <Camera className="h-6 w-6 text-purple-600" />
-              <span className="text-xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-                KidsGallery
-              </span>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* Left Column */}
+          <div className="space-y-6">
+            <p className="text-gray-600 text-sm leading-relaxed">
+              Aquest és un espai per compartir les opinions de nens i nenes de
+              4t i 5è d'educació primària de Catalunya. Aquests alumnes han
+              participat en el projecte "Preeemptive interventions for
+              high-efficacy instruction on writing" (PRINT-W), finançat pel
+              Ministerio de Innovación y Ciencia (ref. PID2022-137868NB-I00;
+              investigadora principal: Naymé Salas). Aquesta web utilitza eines
+              d'intel·ligència artificial per evitar que es comparteixi
+              contingut diferent de textos manuscrits per infants de primària.
+              Ni la investigadora principal i l'equip del projecte de recerca,
+              ni el desenvolupador de la web no es fan responsables d'usos amb
+              altres finalitats. Aquesta responsabilitat és exclusiva de qui
+              penja contingut. ES RECOMANA LA SUPERVISIÓ PARENTAL EN TOT MOMENT.
+            </p>
+
+            {/* Logos */}
+            <div className="flex flex-col md:flex-row items-center justify-start gap-6">
+              <img
+                src="/elbec.avif"
+                alt="El Bec Logo"
+                className="h-24 object-contain"
+              />
+              <img
+                src="/gobierno.avif"
+                alt="Gobierno Logo"
+                className="h-24 object-contain"
+              />
+              <img
+                src="/uab.avif"
+                alt="UAB Logo"
+                className="h-24 object-contain"
+              />
             </div>
-            <p className="text-gray-600">
-              Un espacio seguro para que los niños compartan su creatividad
-              a través de la fotografía.
-            </p>
           </div>
 
-          <div>
-            <h3 className="font-semibold text-gray-800 mb-4">Enlaces Rápidos</h3>
-            <ul className="space-y-2">
-              <li>
-                <a href="#home" className="text-gray-600 hover:text-purple-600">
-                  Inicio
-                </a>
-              </li>
-              <li>
-                <a href="#upload" className="text-gray-600 hover:text-purple-600">
-                  Subir Foto
-                </a>
-              </li>
-              <li>
-                <a href="#gallery" className="text-gray-600 hover:text-purple-600">
-                  Galería
-                </a>
-              </li>
-              <li>
-                <a href="#about" className="text-gray-600 hover:text-purple-600">
-                  Sobre Nosotros
-                </a>
-              </li>
-            </ul>
-          </div>
-
-          <div>
-            <h3 className="font-semibold text-gray-800 mb-4">Seguridad</h3>
-            <div className="flex items-center space-x-2 text-gray-600 mb-2">
-              <Shield className="h-5 w-5" />
-              <span>Entorno Seguro para Niños</span>
-            </div>
-            <p className="text-gray-600 text-sm">
-              Nos tomamos muy en serio la seguridad de los niños. Todas las
-              imágenes son moderadas y los datos personales están protegidos.
-            </p>
-          </div>
-        </div>
-
-        <div className="mt-8 pt-8 border-t border-gray-200">
-          <div className="flex flex-col md:flex-row justify-between items-center">
-            <p className="text-gray-600 text-sm">
-              © 2024 KidsGallery. Todos los derechos reservados.
-            </p>
-            <div className="flex items-center space-x-1 text-gray-600 text-sm mt-4 md:mt-0">
-              Hecho con <Heart className="h-4 w-4 text-red-500" /> para pequeños artistas
+          {/* Right Column */}
+          <div className="space-y-4">
+            <div className="flex items-start space-x-2">
+              <Shield className="h-5 w-5 mt-1 flex-shrink-0 text-[#193547]" />
+              <div className="space-y-2">
+                <h3 className="font-semibold text-gray-800">Seguretat</h3>
+                <p className="text-gray-600 text-sm leading-relaxed">
+                  Espai segur per a infants. Ens prenem molt seriosament la
+                  seguretat dels infants. Per això, les imatges que es penjen
+                  són moderades, a més de les eines d'intel·ligència artificial
+                  que s'han utilitzat en la seva construcció. No es recopila
+                  informació personal dels usuaris de la web, garantint, així,
+                  la seva confidencialitat.
+                </p>
+              </div>
             </div>
           </div>
         </div>
@@ -74,3 +67,4 @@ const Footer = () => {
 };
 
 export default Footer;
+
