@@ -1,15 +1,29 @@
 import React from "react";
-import { useParams, Link } from "react-router-dom";
-import { ArrowLeft, User, Calendar } from "lucide-react";
+import { useParams, Link, useNavigate } from "react-router-dom";
+import { ArrowLeft, User, Trash2 } from "lucide-react";
 import type { ImageItem } from "../App";
 
 interface PhotoDetailProps {
   images: ImageItem[];
+  isAdmin?: boolean;
+  onDeleteImage?: (imageId: string) => void;
 }
 
-const PhotoDetail: React.FC<PhotoDetailProps> = ({ images }) => {
+const PhotoDetail: React.FC<PhotoDetailProps> = ({
+  images,
+  isAdmin = false,
+  onDeleteImage,
+}) => {
   const { id } = useParams();
+  const navigate = useNavigate();
   const image = images.find((img) => img.id === id);
+
+  const handleDelete = async () => {
+    if (!image || !onDeleteImage) return;
+
+    onDeleteImage(image.id);
+    navigate("/");
+  };
 
   if (!image) {
     return (
@@ -47,6 +61,15 @@ const PhotoDetail: React.FC<PhotoDetailProps> = ({ images }) => {
             alt={image.title || "Imagen de galería"}
             className="w-full h-[70vh] object-contain bg-black"
           />
+          {isAdmin && (
+            <button
+              onClick={handleDelete}
+              className="absolute top-4 right-4 p-3 bg-red-500 rounded-full hover:bg-red-600 transition-colors duration-200"
+              title="Borrar imagen"
+            >
+              <Trash2 className="h-6 w-6 text-white" />
+            </button>
+          )}
         </div>
 
         <div className="p-6">
@@ -94,4 +117,3 @@ const PhotoDetail: React.FC<PhotoDetailProps> = ({ images }) => {
 };
 
 export default PhotoDetail;
-

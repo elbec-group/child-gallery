@@ -1,5 +1,3 @@
-import { FirebaseApp } from "firebase/app";
-
 export interface ImageMetadata {
   id: string;
   fileName: string;
@@ -20,6 +18,7 @@ export interface IImageManager {
     title?: string,
   ): Promise<Result<ImageMetadata>>;
   getImage(id: string): Promise<Result<ImageMetadata>>;
+  deleteImage(id: string): Promise<Result<void>>;
 }
 
 export interface ImageManagerConfig {

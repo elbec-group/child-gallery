@@ -1,10 +1,17 @@
-import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import {
+  getStorage,
+  ref,
+  uploadBytes,
+  getDownloadURL,
+  deleteObject,
+} from "firebase/storage";
 import {
   getFirestore,
   collection,
   addDoc,
   getDocs,
   query,
+  deleteDoc,
 } from "firebase/firestore";
 import { v4 as uuidv4 } from "uuid";
 
@@ -152,6 +159,39 @@ export class ImageManager {
       this.cache.set(id, imageData);
 
       return [null, imageData];
+    } catch (error) {
+      return [error as Error, null];
+    }
+  }
+
+  async deleteImage(id: string): Promise<Result<void>> {
+    try {
+      // Buscar y eliminar el documento en Firestore
+      const imagesRef = collection(this.db, "images");
+      const querySnapshot = await getDocs(query(imagesRef));
+      const docToDelete = querySnapshot.docs.find(
+        (doc) => doc.data().id === id,
+      );
+
+      if (!docToDelete) {
+        return [new Error("Imagen no encontrada"), null];
+      }
+
+      // Eliminar de Firestore
+      await deleteDoc(docToDelete.ref);
+
+      // Eliminar del Storage
+      const imageData = docToDelete.data() as ImageMetadata;
+      const storageRef = ref(
+        this.storage,
+        `images/${imageData.id}.${imageData.fileExtension}`,
+      );
+      await deleteObject(storageRef);
+
+      // Eliminar de la caché local si existe
+      this.cache.delete(id);
+
+      return [null, void 0];
     } catch (error) {
       return [error as Error, null];
     }

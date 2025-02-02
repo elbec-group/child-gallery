@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Search, Loader2, AlertCircle } from "lucide-react";
+import { Search, Loader2, AlertCircle, Trash2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import type { ImageItem } from "../App";
 
@@ -7,9 +7,17 @@ interface GalleryProps {
   images: ImageItem[];
   isLoading: boolean;
   error: string | null;
+  isAdmin?: boolean;
+  onDeleteImage?: (imageId: string) => void;
 }
 
-const Gallery: React.FC<GalleryProps> = ({ images, isLoading, error }) => {
+const Gallery: React.FC<GalleryProps> = ({
+  images,
+  isLoading,
+  error,
+  isAdmin = false,
+  onDeleteImage,
+}) => {
   const [searchTerm, setSearchTerm] = useState("");
 
   const filteredImages = images.filter(
@@ -17,6 +25,11 @@ const Gallery: React.FC<GalleryProps> = ({ images, isLoading, error }) => {
       img.pseudonym.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (img.title?.toLowerCase() || "").includes(searchTerm.toLowerCase()),
   );
+
+  const handleDelete = (e: React.MouseEvent, imageId: string) => {
+    e.preventDefault(); // Prevenir la navegación del Link
+    onDeleteImage?.(imageId);
+  };
 
   return (
     <section id="gallery" className="py-16">
@@ -78,6 +91,15 @@ const Gallery: React.FC<GalleryProps> = ({ images, isLoading, error }) => {
                     )}
                   </div>
                 </div>
+                {isAdmin && (
+                  <button
+                    onClick={(e) => handleDelete(e, image.id)}
+                    className="absolute top-2 right-2 p-2 bg-red-500 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300 hover:bg-red-600"
+                    title="Borrar imagen"
+                  >
+                    <Trash2 className="h-5 w-5 text-white" />
+                  </button>
+                )}
               </Link>
             ))}
           </div>
@@ -97,4 +119,3 @@ const Gallery: React.FC<GalleryProps> = ({ images, isLoading, error }) => {
 };
 
 export default Gallery;
-
