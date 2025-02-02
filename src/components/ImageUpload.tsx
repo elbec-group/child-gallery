@@ -2,6 +2,7 @@ import React, { useState, useCallback, useRef } from "react";
 import { Upload, AlertCircle, Loader2 } from "lucide-react";
 import type { ImageItem } from "../App";
 import { ImageManager } from "../lib/firebase/ImageManager";
+import NSFWValidator from "../lib/nsfw/NSFWValidator";
 
 interface ImageUploadProps {
   onUpload: (image: ImageItem) => void;
@@ -14,6 +15,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({ onUpload }) => {
   const [title, setTitle] = useState("");
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isValidating, setIsValidating] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
@@ -27,42 +29,62 @@ const ImageUpload: React.FC<ImageUploadProps> = ({ onUpload }) => {
     }
   }, []);
 
-  const processFile = useCallback((file: File) => {
+  const validateAndProcessFile = async (file: File) => {
     if (file && file.type.startsWith("image/")) {
-      setSelectedFile(file);
-      const reader = new FileReader();
-      reader.onload = () => {
-        setPreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+      setIsValidating(true);
       setError(null);
+
+      try {
+        // Validar con NSFW.js
+        const validator = NSFWValidator.getInstance();
+        const validationResult = await validator.validateImage(file);
+
+        if (!validationResult.isValid) {
+          setError(validationResult.message || "Error de validació");
+          setPreview(null);
+          setSelectedFile(null);
+          return;
+        }
+
+        // Si pasa la validación, mostrar preview
+        const reader = new FileReader();
+        reader.onload = () => {
+          setPreview(reader.result as string);
+        };
+        reader.readAsDataURL(file);
+        setSelectedFile(file);
+        setError(null);
+      } catch (error) {
+        setError("Error al validar la imatge");
+        setPreview(null);
+        setSelectedFile(null);
+      } finally {
+        setIsValidating(false);
+      }
     } else {
-      setError("Por favor, selecciona un archivo de imagen válido");
+      setError("Si us plau, selecciona un arxiu d'imatge vàlid");
+    }
+  };
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+
+    const file = e.dataTransfer.files?.[0];
+    if (file) {
+      validateAndProcessFile(file);
     }
   }, []);
-
-  const handleDrop = useCallback(
-    (e: React.DragEvent) => {
-      e.preventDefault();
-      e.stopPropagation();
-      setDragActive(false);
-
-      const file = e.dataTransfer.files?.[0];
-      if (file) {
-        processFile(file);
-      }
-    },
-    [processFile],
-  );
 
   const handleFileChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const file = e.target.files?.[0];
       if (file) {
-        processFile(file);
+        validateAndProcessFile(file);
       }
     },
-    [processFile],
+    [],
   );
 
   const handleSubmit = useCallback(
@@ -83,12 +105,11 @@ const ImageUpload: React.FC<ImageUploadProps> = ({ onUpload }) => {
 
         if (error) throw error;
         if (!metadata)
-          throw new Error("No se pudo obtener la metadata de la imagen");
+          throw new Error("No s'ha pogut obtenir la metadata de la imatge");
 
-        // Crear el objeto ImageItem con los datos de Firebase
         const newImage: ImageItem = {
           id: metadata.id,
-          url: metadata.url || preview, // Usar preview como fallback
+          url: metadata.url || preview,
           pseudonym: metadata.creator || "Anònim",
           title: metadata.title,
         };
@@ -105,7 +126,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({ onUpload }) => {
         }
       } catch (err) {
         setError(
-          err instanceof Error ? err.message : "Error al subir la imagen",
+          err instanceof Error ? err.message : "Error al pujar la imatge",
         );
       } finally {
         setIsUploading(false);
@@ -144,7 +165,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({ onUpload }) => {
               onChange={handleFileChange}
               accept="image/*"
               className="hidden"
-              disabled={isUploading}
+              disabled={isUploading || isValidating}
             />
             {preview ? (
               <img
@@ -154,13 +175,22 @@ const ImageUpload: React.FC<ImageUploadProps> = ({ onUpload }) => {
               />
             ) : (
               <div className="space-y-4">
-                <Upload className="h-12 w-12 mx-auto text-gray-400" />
-                <p className="text-gray-600">
-                  Arrossega la teva foto aquí o{" "}
-                  <span className="text-[#193547] font-semibold">
-                    fes click per sel·leccionar
-                  </span>
-                </p>
+                {isValidating ? (
+                  <>
+                    <Loader2 className="h-12 w-12 mx-auto text-gray-400 animate-spin" />
+                    <p className="text-gray-600">Validant imatge...</p>
+                  </>
+                ) : (
+                  <>
+                    <Upload className="h-12 w-12 mx-auto text-gray-400" />
+                    <p className="text-gray-600">
+                      Arrossega la teva foto aquí o{" "}
+                      <span className="text-[#193547] font-semibold">
+                        fes click per sel·leccionar
+                      </span>
+                    </p>
+                  </>
+                )}
               </div>
             )}
           </div>
@@ -214,13 +244,18 @@ const ImageUpload: React.FC<ImageUploadProps> = ({ onUpload }) => {
 
           <button
             type="submit"
-            disabled={!preview || isUploading}
+            disabled={!preview || isUploading || isValidating}
             className="w-full py-3 bg-[#193547] text-white rounded-lg font-semibold hover:bg-opacity-90 transition-colors duration-200 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
             {isUploading ? (
               <>
                 <Loader2 className="h-5 w-5 animate-spin" />
                 Penjant text...
+              </>
+            ) : isValidating ? (
+              <>
+                <Loader2 className="h-5 w-5 animate-spin" />
+                Validant...
               </>
             ) : (
               "Penjar text"
@@ -233,4 +268,3 @@ const ImageUpload: React.FC<ImageUploadProps> = ({ onUpload }) => {
 };
 
 export default ImageUpload;
-
