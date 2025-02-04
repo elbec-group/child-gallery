@@ -9,4 +9,4 @@ deploy:
 	surge dist https://elmeutextdopinio.cat/
 
 repomix:
-	npx repomix ./src -c .repomix/config.json -o .repomix/repomix-src.xml
+	npx repomix ./ -c .repomix/config.json -o .repomix/repomix-src.xml
